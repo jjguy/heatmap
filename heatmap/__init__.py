@@ -1,5 +1,5 @@
 #heatmap.py v1.0 20091004
-from PIL import Image,ImageChops
+from PIL import Image,ImageChops,ImageDraw
 import os
 import random
 import math
@@ -76,13 +76,11 @@ class Heatmap:
         img = Image.new('RGBA', self.size, 'white')
         for x,y in points:
             tmp = Image.new('RGBA', self.size, 'white')
-            tmp.paste( dot, self._translate([x,y]) )
+            tmp.paste(dot, self._translate([x,y]))
             img = ImageChops.multiply(img, tmp)
 
-
         colors = colorschemes.schemes[scheme]
-        img.save("bw.png", "PNG")
-        self._colorize(img, colors)
+        img = self._colorize(img, colors)
 
         img.save(fout, "PNG")
 
@@ -128,18 +126,19 @@ class Heatmap:
             image densities  """
         finalVals = {}
         w,h = img.size
+        pixels = img.load()
         for x in range(w):
             for y in range(h):
-                pix = img.getpixel((x,y))
+                pix = pixels[x, y]
                 rgba = list(colors[pix[0]][:3])  #trim off alpha, if it's there.
                 if pix[0] <= 254: 
                     alpha = self.opacity
                 else:
                     alpha = 0 
                 rgba.append(alpha) 
+                pixels[x, y] = tuple(rgba)
+        return img
 
-                img.putpixel((x,y), tuple(rgba))
-            
     def _ranges(self, points):
         """ walks the list of points and finds the 
         max/min x & y values in the set """
