@@ -1,0 +1,7 @@
+heatmap 1.0
+jjg@case.edu
+
+Build heatmaps in python.  Requires the Python Imaging Library.
+
+Minimal example in example.py.  Full readme at http://jjguy.com/heatmap/
+
