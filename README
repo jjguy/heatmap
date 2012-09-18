@@ -5,3 +5,16 @@ Build heatmaps in python.  Requires the Python Imaging Library.
 
 Minimal example in example.py.  Full readme at http://jjguy.com/heatmap/
 
+CHANGELOG
+
+2.0 - 17 Sep 12
+    - moved heavy lifting into C module.  Compiles on POSIX systems,
+      pre-compiled DLLs provided for x86 and x64 Windows systems.
+
+1.1 - 31 Jan 10
+    - modified _colorize() to not use putpixel; 
+      reduced processing time for 1024x1024 image from 14s to 5s
+
+1.0
+    - Initial release
+

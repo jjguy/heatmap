@@ -1,0 +1,8 @@
+include setup.py
+include *.dll
+include example.py
+include heatmap/__init__.py
+include heatmap/colorschemes.py
+include heatmap.c
+include README
+include LICENSE

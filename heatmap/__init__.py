@@ -1,10 +1,12 @@
-#heatmap.py v1.0 20091004
+#heatmap.py v1.1 20100326
 from PIL import Image,ImageChops,ImageDraw
 import os
 import random
 import math
 import sys
 import colorschemes
+import ctypes
+import heatmap
 
 KML = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -45,6 +47,22 @@ class Heatmap:
     def __init__(self):
         self.minXY = ()
         self.maxXY = ()
+        # if you're reading this, it's probably because this 
+        # hacktastic garbage failed.  sorry.  I deserve a jab or two via @jjguy.
+
+        # establish the right library name, based on platform and arch.  Windows
+        # are pre-compiled binaries; linux machines are compiled during setup.
+        libname = "cHeatmap.so"
+        if "nt" in os.name:
+            libname = "cHeatmap-x86.dll"
+            import platform
+            if "64" in platform.architecture()[0]:
+                libname = "cHeatmap-x64.dll"
+        # now rip through everything in sys.path to find 'em.  Should be in site-packages 
+        # or local dir
+        for d in sys.path:
+            if os.path.isfile(os.path.join(d, libname)):
+                self._heatmap = ctypes.cdll.LoadLibrary(os.path.join(d, libname))
 
     def heatmap(self, points, fout, dotsize=150, opacity=128, size=(1024,1024), scheme="classic"):
         """
@@ -67,22 +85,44 @@ class Heatmap:
         self.imageFile = fout
  
         if scheme not in self.schemes():
-            tmp = "Unknown color scheme: %s.  Available schemes: %s"  % (scheme, self.schemes())                           
+            tmp = "Unknown color scheme: %s.  Available schemes: %s"  % (scheme, self.schemes())
             raise Exception(tmp)
 
-        self.minXY, self.maxXY = self._ranges(points)
-        dot = self._buildDot(self.dotsize)
+        arrPoints = self._convertPoints(points)
+        arrScheme = self._convertScheme(scheme)
+        arrFinalImage = self._allocOutputBuffer()
 
-        img = Image.new('RGBA', self.size, 'white')
-        for x,y in points:
-            tmp = Image.new('RGBA', self.size, 'white')
-            tmp.paste(dot, self._translate([x,y]))
-            img = ImageChops.multiply(img, tmp)
-
-        colors = colorschemes.schemes[scheme]
-        img = self._colorize(img, colors)
-
+        self._heatmap.tx(arrPoints, len(points)*2, size[0], size[1], dotsize, 
+                         arrScheme, arrFinalImage, opacity)
+        img = Image.frombuffer('RGBA', (self.size[0], self.size[1]), arrFinalImage, 'raw', 'RGBA', 0, 1)
         img.save(fout, "PNG")
+
+    def _allocOutputBuffer(self):
+        return (ctypes.c_ubyte*(self.size[0]*self.size[1]*4))()
+
+    def _convertPoints(self, pts):
+        """ flatten the list of tuples, convert into ctypes array """
+
+        #TODO is there a better way to do this??
+        flat = []
+        for i,j in pts:
+           flat.append(i)
+           flat.append(j)
+        #build array of input points
+        arr_pts = (ctypes.c_float*(len(pts)*2))(*flat)
+        return arr_pts
+    
+    def _convertScheme(self, scheme):
+        """ flatten the list of RGB tuples, convert into ctypes array """
+
+        #TODO is there a better way to do this??
+        flat = []
+        for r,g,b in colorschemes.schemes[scheme]:
+            flat.append(r)
+            flat.append(g)
+            flat.append(b)
+        arr_cs = (ctypes.c_int*(len(colorschemes.schemes[scheme])*3))(*flat)
+        return arr_cs
 
     def saveKML(self, kmlFile):
         """ 
@@ -94,11 +134,12 @@ class Heatmap:
         """
 
         tilePath = os.path.basename(self.imageFile)
+        """
         north = self.maxXY[1]
         south = self.minXY[1]
         east = self.maxXY[0]
         west = self.minXY[0]
-        
+        """ 
         bytes = KML % (tilePath, north, south, east, west)
         file(kmlFile, "w").write(bytes)
 
@@ -107,73 +148,6 @@ class Heatmap:
         Return a list of available color scheme names.
         """
         return colorschemes.schemes.keys() 
-
-    def _buildDot(self, size):
-        """ builds a temporary image that is plotted for 
-            each point in the dataset"""
-        img = Image.new("RGB", (size,size), 'white')
-        md = 0.5*math.sqrt( (size/2.0)**2 + (size/2.0)**2 )
-        for x in range(size):
-            for y in range(size):
-                d = math.sqrt( (x - size/2.0)**2 + (y - size/2.0)**2 )
-                rgbVal = int(200*d/md + 50)
-                rgb = (rgbVal, rgbVal, rgbVal)
-                img.putpixel((x,y), rgb)
-        return img
-
-    def _colorize(self, img, colors):
-        """ use the colorscheme selected to color the 
-            image densities  """
-        finalVals = {}
-        w,h = img.size
-        pixels = img.load()
-        for x in range(w):
-            for y in range(h):
-                pix = pixels[x, y]
-                rgba = list(colors[pix[0]][:3])  #trim off alpha, if it's there.
-                if pix[0] <= 254: 
-                    alpha = self.opacity
-                else:
-                    alpha = 0 
-                rgba.append(alpha) 
-                pixels[x, y] = tuple(rgba)
-        return img
-
-    def _ranges(self, points):
-        """ walks the list of points and finds the 
-        max/min x & y values in the set """
-        minX = points[0][0]; minY = points[0][1]
-        maxX = minX; maxY = minY
-        for x,y in points:
-            minX = min(x, minX)
-            minY = min(y, minY)
-            maxX = max(x, maxX)
-            maxY = max(y, maxY)
-            
-        return ((minX, minY), (maxX, maxY))
-
-    def _translate(self, point):
-        """ translates x,y coordinates from data set into 
-        pixel offsets."""
-        x = point[0]
-        y = point[1]
-
-        #normalize points into range (0 - 1)...
-        x = (x - self.minXY[0]) / float(self.maxXY[0] - self.minXY[0])
-        y = (y - self.minXY[1]) / float(self.maxXY[1] - self.minXY[1])
-
-        #...and the map into our image size...
-        x = int(x*self.size[0])
-        y = int((1-y)*self.size[1])
-         
-        # the upper-left corner of our dot is placed at
-        # the x,y coordinate we provide. 
-        # we care about their center.  shift up and left so
-        # the center of the dot is at the point we expect.
-        x = x - self.dotsize / 2
-        y = y - self.dotsize / 2
-
-        return (x,y)
 
 if __name__ == "__main__":
     pts = []
