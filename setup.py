@@ -31,7 +31,7 @@ module1 = Extension('cHeatmap',
                     sources= [ 'heatmap.c',])
 
 setup(name='heatmap',
-      version='2.0',
+      version='2.1.1',
       description='Module to create heatmaps',
       author='Jeffrey J. Guy',
       author_email='jjg@case.edu',

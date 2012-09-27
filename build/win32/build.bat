@@ -1,6 +1,6 @@
 @echo off
-rem in theory, as long as %vcinstalldir% points to your VC base directory, the rest of this should 
-rem just work.  I built the distributed DLLs on VS2012 from the distribution directory with just:
+rem in theory, as long as you launch the VS command prompt, the rest of this should 
+rem just work.  I built the distributed DLLs on VS2012 cmd prompt from the distribution directory with just:
 rem  c:\heatmap-2.0\build\win32> build.bat
 rem
 rem ----------- x86 -------------

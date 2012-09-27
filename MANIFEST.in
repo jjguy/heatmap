@@ -3,6 +3,7 @@ include *.dll
 include example.py
 include heatmap/__init__.py
 include heatmap/colorschemes.py
+include build/win32/build.bat
 include heatmap.c
 include README
 include LICENSE

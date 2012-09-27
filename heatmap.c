@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-float MIN_X = 0; 
+float MIN_X = 0;
 float MIN_Y = 0;
 float MAX_X = 0;
 float MAX_Y = 0;
@@ -35,10 +35,10 @@ void getBounds(float *points, unsigned int cPoints)
     unsigned int i = 0;
 
     // first init the global counts
-    MIN_X = 0;
-    MIN_Y = 0;
-    MAX_X = 0;
-    MAX_Y = 0;
+    MIN_X = points[i];
+    MIN_Y = points[i+1];
+    MAX_X = points[i];
+    MAX_Y = points[i+1];
 
     //then iterate over the list and find the max/min values
     for(i = 0; i < cPoints; i=i+2)
@@ -110,6 +110,9 @@ unsigned char* calcDensity(float *points, int cPoints)
                 ndx = k*WIDTH + j;
                 if(ndx >= (int)WIDTH*HEIGHT) continue;   // ndx can be greater than array bounds
 
+                #ifdef DEBUG
+                printf("pt.x: %.2f pt.y: %.2f j: %d k: %d ndx: %d\n", pt.x, pt.y, j, k, ndx);
+                #endif 
 
                 pixels[ndx] = (pixels[ndx] * pixVal) / 255;
             } // for k
@@ -125,17 +128,22 @@ unsigned char *colorize(unsigned char* pixels_bw, int *scheme, unsigned char* pi
     int i = 0;
     int pix = 0;
     int highCount = 0;
+    int alpha = opacity;
 
     for(i = 0; i < (int)WIDTH*HEIGHT; i++)
     {
         pix = pixels_bw[i];
 
         if (pix < 0x10) highCount++;
+        if (pix <= 252) 
+            alpha = opacity; 
+        else 
+            alpha = 0;
 
         pixels_color[i*4] = scheme[pix*3];
         pixels_color[i*4+1] = scheme[pix*3+1];
         pixels_color[i*4+2] = scheme[pix*3+2];
-        pixels_color[i*4+3] = opacity;
+        pixels_color[i*4+3] = alpha;
     } 
     
     if (highCount > WIDTH*HEIGHT*0.8)
@@ -164,7 +172,7 @@ unsigned char *tx(float *points,
 
     //basic sanity checks to keep from segfaulting
     if (NULL == points || NULL == scheme || NULL == pix_color ||
-        w <= 0 || h <= 0 || cPoints <= 0 || opacity < 0 || dotsize <= 0)
+        w <= 0 || h <= 0 || cPoints <= 1 || opacity < 0 || dotsize <= 0)
     {
         fprintf(stderr, "Invalid parameter; aborting.\n");
         return NULL;
@@ -185,6 +193,10 @@ unsigned char *tx(float *points,
     {
         getBounds(points, cPoints);
     }
+
+    #ifdef DEBUG
+    printf("min: (%.2f, %.2f) max: (%.2f, %.2f)\n", MIN_X, MIN_Y, MAX_X, MAX_Y);
+    #endif
 
     //iterate through points, place a dot at each center point
     //and set pix value from 0 - 255 using multiply method for radius [dotsize].

@@ -6,6 +6,7 @@ import math
 import sys
 import colorschemes
 import ctypes
+import platform
 
 KML = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -57,9 +58,10 @@ class Heatmap:
             # are pre-compiled binaries; linux machines are compiled during setup.
             self._heatmap = None
             libname = "cHeatmap.so"
-            if "nt" in os.name:
+            if "cygwin" in platform.system().lower():
+                libname = "cHeatmap.dll"
+            if "windows" in platform.system().lower():
                 libname = "cHeatmap-x86.dll"
-                import platform
                 if "64" in platform.architecture()[0]:
                     libname = "cHeatmap-x64.dll"
             # now rip through everything in sys.path to find 'em.  Should be in site-packages 
@@ -93,6 +95,7 @@ class Heatmap:
         self.opacity = opacity
         self.size = size
         self.imageFile = fout
+        self.points = points
 
         if area is not None:
             self.area = area
@@ -147,6 +150,19 @@ class Heatmap:
         arr_cs = (ctypes.c_int*(len(colorschemes.schemes[scheme])*3))(*flat)
         return arr_cs
 
+    def _ranges(self, points):
+        """ walks the list of points and finds the 
+        max/min x & y values in the set """
+        minX = points[0][0]; minY = points[0][1]
+        maxX = minX; maxY = minY
+        for x,y in points:
+            minX = min(x, minX)
+            minY = min(y, minY)
+            maxX = max(x, maxX)
+            maxY = max(y, maxY)
+    
+        return ((minX, minY), (maxX, maxY))
+
     def saveKML(self, kmlFile):
         """ 
         Saves a KML template to use with google earth.  Assumes x/y coordinates 
@@ -155,14 +171,12 @@ class Heatmap:
 
         kmlFile ->  output filename for the KML.
         """
-
         tilePath = os.path.basename(self.imageFile)
-        """
-        north = self.maxXY[1]
-        south = self.minXY[1]
-        east = self.maxXY[0]
-        west = self.minXY[0]
-        """ 
+        if self.override:
+            ((east, south), (west, north)) = self.area
+        else:
+            ((east, south), (west, north)) = self._ranges(self.points) 
+
         bytes = KML % (tilePath, north, south, east, west)
         file(kmlFile, "w").write(bytes)
 
@@ -197,8 +211,12 @@ if __name__ == "__main__":
 
     hm.heatmap([(50,50),], "06-single-point.png")
 
+    pts = [(random.uniform(-77.012, -77.050), random.uniform(38.888, 38.910)) for x in range(100)]
+    hm.heatmap(pts, "07-random-google-earth-wash-dc.png")
+    hm.saveKML("07-random-google-earth-wash-dc-data.kml")
+
     try:
-        hm.heatmap([], "07-no-points-THIS-FILE-SHOULD-NOT-EXIST.png")
+        hm.heatmap([], "08-no-points-THIS-FILE-SHOULD-NOT-EXIST.png")
     except Exception, err:
         pass
     

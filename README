@@ -7,6 +7,16 @@ Minimal example in example.py.  Full readme at http://jjguy.com/heatmap/
 
 CHANGELOG
 
+2.1.1 - 27 Sep 12
+    - added install support for cygwin
+    - fixed gross omission of KML output
+    - fixed bug in min computation with negative values
+
+2.1 - 20 Sep 12
+    - fixed bug that flipped x/y coordinates - thanks to Curt Hartung for the find and fix
+    - added area parameter to allow caller to specify data bounds - thanks to Alex Little for the design.
+    - various small cleanups
+
 2.0 - 17 Sep 12
     - moved heavy lifting into C module.  Compiles on POSIX systems,
       pre-compiled DLLs provided for x86 and x64 Windows systems.
