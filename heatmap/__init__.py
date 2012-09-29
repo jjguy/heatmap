@@ -1,5 +1,6 @@
-
-__version_info__ = ('2', '1', '2')
-__version__ = '.'.join(__version_info__)
+try:
+    __version__ = __import__('pkg_resources').get_distribution(__name__).version
+except Exception, e:
+    __version__ = 'unknown'
 
 from heatmap import Heatmap

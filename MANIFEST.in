@@ -1,9 +1,6 @@
 include setup.py
 include *.dll
-include example.py
-include heatmap/__init__.py
-include heatmap/colorschemes.py
-include build/win32/build.bat
-include heatmap.c
+include examples/*.py
+include build.bat
 include README
 include LICENSE
