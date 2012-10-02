@@ -1280,3 +1280,7 @@ schemes = {'classic': [(255, 237, 237),
              (51, 53, 51),
              (51, 52, 51),
              (51, 52, 51)]}
+
+def valid_schemes():
+    return schemes.keys()
+
