@@ -1,13 +1,12 @@
-#heatmap.py v1.1 20100326
 import os
 import sys
 import ctypes
 import platform
+import math
 
 import colorschemes
 
-from PIL import Image, ImageChops, ImageDraw
-
+from PIL import Image
 
 class Heatmap:
     """
@@ -48,6 +47,7 @@ class Heatmap:
     def __init__(self, libpath=None):
         self.minXY = ()
         self.maxXY = ()
+        self.img = None
         # if you're reading this, it's probably because this
         # hacktastic garbage failed.  sorry.  I deserve a jab or two via @jjguy.
 
@@ -75,7 +75,7 @@ class Heatmap:
         if not self._heatmap:
             raise Exception("Heatmap shared library not found in PYTHONPATH.")
 
-    def get_heatmap(self, points, dotsize=150, opacity=128, size=(1024, 1024), scheme="classic", area=None):
+    def heatmap(self, points, dotsize=150, opacity=128, size=(1024, 1024), scheme="classic", area=None):
         """
         points  -> an iterable list of tuples, where the contents are the
                    x,y coordinates to plot. e.g., [(1, 1), (2, 2), (3, 3)]
@@ -122,17 +122,9 @@ class Heatmap:
         if not ret:
             raise Exception("Unexpected error during processing.")
 
-        return Image.frombuffer('RGBA', (self.size[0], self.size[1]), arrFinalImage, 'raw', 'RGBA', 0, 1)
-
-    def heatmap(self, points, fout, *args, **kwargs):
-        """
-        params of get_heatmap and
-
-        fout    -> output file for the PNG
-        """
-        self.imageFile = fout
-        img = self.get_heatmap(points, *args, **kwargs)
-        img.save(fout, "PNG")
+        self.img = Image.frombuffer('RGBA', (self.size[0], self.size[1]), 
+                                    arrFinalImage, 'raw', 'RGBA', 0, 1)
+        return self.img
 
     def _allocOutputBuffer(self):
         return (ctypes.c_ubyte * (self.size[0] * self.size[1] * 4))()
@@ -177,7 +169,7 @@ class Heatmap:
 
         return ((minX, minY), (maxX, maxY))
 
-    def saveKML(self, kmlFile, tilePath=None):
+    def saveKML(self, kmlFile):
         """
         Saves a KML template to use with google earth.  Assumes x/y coordinates
         are lat/long, and creates an overlay to display the heatmap within Google
@@ -185,9 +177,11 @@ class Heatmap:
 
         kmlFile ->  output filename for the KML.
         """
-        if tilePath is None:
-            assert self.imageFile
-            tilePath = os.path.basename(self.imageFile)
+        if self.img is None:
+            raise Exception("Must first run heatmap() to generate image file.")
+
+        tilePath = os.path.splitext(kmlFile)[0] + ".png"
+        self.img.save(tilePath)
 
         if self.override:
             ((east, south), (west, north)) = self.area
@@ -201,4 +195,4 @@ class Heatmap:
         """
         Return a list of available color scheme names.
         """
-        return colorschemes.schemes.keys()
+        return colorschemes.valid_schemes()

@@ -33,7 +33,7 @@ class post_install(install):
 cHeatmap = Extension('cHeatmap', sources=['heatmap/heatmap.c', ])
 
 setup(name='heatmap',
-      version="2.1.2",
+      version="2.2",
       description='Module to create heatmaps',
       author='Jeffrey J. Guy',
       author_email='jjg@case.edu',

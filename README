@@ -3,9 +3,15 @@ jjg@case.edu
 
 Build heatmaps in python.  Requires the Python Imaging Library.
 
-Minimal example in example.py.  Full readme at http://jjguy.com/heatmap/
+Minimal example in examples/example.py.  Full readme at http://jjguy.com/heatmap/
 
 CHANGELOG
+
+2.2 - 2 Oct 12
+    - modifed API to return Image instance; caller must specify filename
+    - added mercator projections
+    - restructured project layout to be more standardized
+    - many thanks to Jordi Llonch (llonchj@gmail.com, github.com/llonchj) for the pull request
 
 2.1.1 - 27 Sep 12
     - added install support for cygwin
