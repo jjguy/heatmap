@@ -45,6 +45,6 @@ setup(name='heatmap',
       cmdclass={'install': post_install,
                 'build_ext': mybuild},
       requires=["Pillow", ],
-      test_suite=["test", ],
+      test_suite="test",
       tests_require=["Pillow", ],
       )
