@@ -117,7 +117,7 @@ class Heatmap:
             arrScheme, arrFinalImage, opacity, self.override,
             ctypes.c_float(self.area[0][0]), ctypes.c_float(
                 self.area[0][1]),
-            ctypes.c_float(self.area[1][0]), ctypes.c_float(self.area[1][0]))
+            ctypes.c_float(self.area[1][0]), ctypes.c_float(self.area[1][1]))
 
         if not ret:
             raise Exception("Unexpected error during processing.")
