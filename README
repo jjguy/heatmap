@@ -7,6 +7,10 @@ Minimal example in examples/example.py.  Full readme at http://jjguy.com/heatmap
 
 CHANGELOG
 
+2.2.1 - 11 Jan 12
+    - pip install bugfix.  sorry pip folks!  thanks to Jordi Llonch again for the bugfix
+    - bugfix in the area parameter for non-square areas; thanks to github.com/y3pp3r
+
 2.2 - 2 Oct 12
     - modifed API to return Image instance; caller must specify filename
     - restructured project layout to be more standardized
